@@ -1,15 +1,56 @@
+############################
+# OS / Editor / IDE
+############################
 *.iml
-.gradle
+.DS_Store
+Thumbs.db
+.vscode/
+
+############################
+# Android / Gradle
+############################
+.gradle/
+.kotlin/
+**/.kotlin/
+.externalNativeBuild/
+.cxx/
+local.properties
 /local.properties
+/.idea/
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+
+# Build outputs
+/build/
+**/build/
+/captures/
+*.apk
+*.ap_
+*.aab
+*.aar
+
+# Keystores (do not commit signing keys)
+*.keystore
+*.jks
+*.pem
+*.crt
+*.der
+
+############################
+# Node / Server
+############################
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files
+.env
+.env.*
+**/.env
+**/.env.*

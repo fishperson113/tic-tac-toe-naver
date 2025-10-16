@@ -1,8 +1,14 @@
 package com.kotlin.tictactoe.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,24 +16,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.kotlin.tictactoe.model.Difficulty
-import com.kotlin.tictactoe.model.GameState
-import com.kotlin.tictactoe.viewmodel.GameViewModel
-import com.kotlin.tictactoe.ui.components.Board
-import com.kotlin.tictactoe.ui.components.GameInfo
+import com.kotlin.tictactoe.model.ConnectionStatus
+import com.kotlin.tictactoe.model.MultiplayerState
+import com.kotlin.tictactoe.viewmodel.OnlineGameViewModel
+import com.kotlin.tictactoe.ui.components.NumberBoard
 
 @Composable
-fun GameScreen(viewModel: GameViewModel) {
+fun OnlineGameScreen(viewModel: OnlineGameViewModel) {
     val state by viewModel.state.collectAsState()
-    GameContent(state = state, onCell = viewModel::onCellClick, onNewGame = viewModel::newGame, onDifficulty = viewModel::setDifficulty)
+    GameContent(state = state, onCell = viewModel::onCellClick, onReconnect = viewModel::reconnect)
 }
 
 @Composable
 private fun GameContent(
-    state: GameState,
+    state: MultiplayerState,
     onCell: (Int) -> Unit,
-    onNewGame: () -> Unit,
-    onDifficulty: (Difficulty) -> Unit,
+    onReconnect: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -38,47 +42,37 @@ private fun GameContent(
     ) {
         Text(
             text = when {
-                state.winner != null -> "Winner: ${state.winner}"
-                state.isDraw -> "Draw"
-                else -> "Turn: ${state.currentPlayer}"
+                state.gameOver && state.winner != null -> "Game Over: ${state.winner} wins"
+                state.gameOver && state.winner == null -> "Game Over"
+                state.waitingForOpponent -> "Waiting for opponent..."
+                else -> when (state.connectionStatus) {
+                    ConnectionStatus.CONNECTED -> "Connected"
+                    ConnectionStatus.CONNECTING -> "Connecting..."
+                    ConnectionStatus.DISCONNECTED -> "Disconnected"
+                }
             },
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DifficultyDropdown(state.difficulty, onDifficulty)
-            Button(onClick = onNewGame) { Text("New Game") }
+        Card(Modifier.padding(4.dp)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("You are: ${state.player ?: "-"}")
+                Text("Status: ${state.connectionStatus}")
+            }
         }
 
-        Board(state = state, onCell = onCell)
-
-        GameInfo(state)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DifficultyDropdown(current: Difficulty, onChange: (Difficulty) -> Unit) {
-    var expanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded.value, onExpandedChange = { expanded.value = !expanded.value }) {
-        OutlinedTextField(
-            value = current.name,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Difficulty") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
-            modifier = Modifier.menuAnchor()
+        NumberBoard(
+            board = state.board,
+            enabled = state.connectionStatus == ConnectionStatus.CONNECTED && !state.waitingForOpponent && !state.gameOver,
+            lastUpdated = state.lastUpdatedSquare,
+            onCell = onCell
         )
-        ExposedDropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = false }) {
-            Difficulty.values().forEach { d ->
-                DropdownMenuItem(text = { Text(d.name) }, onClick = {
-                    onChange(d)
-                    expanded.value = false
-                })
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (state.connectionStatus == ConnectionStatus.DISCONNECTED) {
+                Button(onClick = onReconnect) { Text("Reconnect") }
             }
         }
     }
 }
-
-// Board and GameInfo moved into ui/components

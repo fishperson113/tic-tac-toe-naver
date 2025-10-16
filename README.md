@@ -1,7 +1,28 @@
-# Tic Tac Toe (Kotlin + Jetpack Compose)
+# Odd/Even 5x5 Multiplayer (Android + WebSocket)
 
-A simple **Tic Tac Toe** Android app built with **Kotlin** and **Jetpack Compose**.  
-This is a starter template project that you can use as a base for experimenting with Compose UI and Android development.
+This app implements a real-time 5x5 Odd/Even tap game using server-authoritative WebSockets.
+
+Key flows:
+- Client sends operations: `{ type: 'INCREMENT', square: N }`.
+- Server applies them in order and broadcasts updates: `{ type: 'UPDATE', square, value }`.
+- Server assigns players on connect: `{ type: 'PLAYER_ASSIGNED', player: 'ODD'|'EVEN', board: [...] }`.
+- On win or disconnect, server broadcasts `{ type: 'GAME_OVER', winner, winningLine }`.
+
+Quick start server (local):
+- Prerequisites: Node.js 18+
+- Commands:
+  - `cd server`
+  - `npm install`
+  - `npm start` (listens on `ws://localhost:8080/ws`)
+
+Android client config:
+- Default URL is `ws://10.0.2.2:8080/ws` (emulator to localhost).
+- To change it, edit `app/src/main/java/com/kotlin/tictactoe/network/GameWebSocketRepository.kt:103`.
+
+Client UI shows:
+- Player role (Odd/Even), connection status, waiting state.
+- 5x5 grid of numbers (tap to request increment; UI updates only after server `UPDATE`).
+- Game Over banner when server announces a winner.
 
 ---
 
